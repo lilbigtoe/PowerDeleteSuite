@@ -1,13 +1,13 @@
 const MAX_RETRIES = 5;
 
 function backoff(retries) {
-  return Math.min(1000 * Math.pow(2, retries), 30000);
+  return Math.min(3000 * Math.pow(2, retries), 30000);
 }
 
 function retryDelay(retries, jqXHR) {
   const rateLimitReset = jqXHR && parseInt(jqXHR.getResponseHeader("x-ratelimit-reset") || "0") * 1000;
   const retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1000;
-  return Math.max(backoff(retries), rateLimitReset || retryAfter || 0);
+  return rateLimitReset || retryAfter || backoff(retries);
 }
 
 function setCooldown(_pd, ms) {
