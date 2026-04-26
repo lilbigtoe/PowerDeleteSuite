@@ -16,6 +16,16 @@
  * @property {Actions} actions
  * @property {UI} ui
  * @property {string[]} editStrings
+ * @property {number} [baseDelay] - current delay between delete/edit operations in ms
+ * @property {'burst'|'pacing'|'throttling'} [rateStatus] - current rate limit state
+ * @property {number} [cooldownUntil] - timestamp when 429 cooldown expires
+ * @property {ReturnType<typeof setInterval>} [cooldownTimer] - active 429 countdown interval
+ * @property {ReturnType<typeof setInterval>} [spinnerTimer] - active spinner interval
+ * @property {string} [spinnerFrame] - current spinner character
+ * @property {any} task - current processing task state
+ * @property {any} filters - active filter configuration
+ * @property {string[]} exportItems - CSV rows for export
+ * @property {string[]} exportIds - dedup list of exported item IDs
  */
 
 /** @type {PD} */
