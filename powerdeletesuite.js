@@ -555,8 +555,9 @@
     return Math.min(1e3 * Math.pow(2, retries), 3e4);
   }
   function retryDelay(retries, jqXHR) {
+    const rateLimitReset = jqXHR && parseInt(jqXHR.getResponseHeader("x-ratelimit-reset") || "0") * 1e3;
     const retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1e3;
-    return Math.max(backoff(retries), retryAfter || 0);
+    return Math.max(backoff(retries), rateLimitReset || retryAfter || 0);
   }
   function setCooldown(_pd, ms) {
     _pd.cooldownUntil = Date.now() + ms;

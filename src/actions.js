@@ -5,8 +5,9 @@ function backoff(retries) {
 }
 
 function retryDelay(retries, jqXHR) {
+  const rateLimitReset = jqXHR && parseInt(jqXHR.getResponseHeader("x-ratelimit-reset") || "0") * 1000;
   const retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1000;
-  return Math.max(backoff(retries), retryAfter || 0);
+  return Math.max(backoff(retries), rateLimitReset || retryAfter || 0);
 }
 
 function setCooldown(_pd, ms) {
