@@ -64,12 +64,13 @@
 
   <hr/>
 
-  <div data-help="Burst: no delay, processes as fast as possible, pauses when rate limited. Hybrid: fast until credits run low, then throttles. Adaptive: paces evenly using rate limit headers throughout.">
-    <label for="pd__strategy">Rate limit:</label>
-    <select id="pd__strategy" name="pd__strategy">
-      <option value="burst" selected>Burst</option>
-      <option value="adaptive">Adaptive</option>
-    </select><a class="pd__q">?</a>
+  <div data-help="Burst: best for under ~100 actions. Processes as fast as possible and pauses briefly before the rate limit is hit. Adaptive: best for large histories. Paces requests automatically using Reddit's rate limit headers to avoid interruptions.">
+    <label>Rate limit:</label>
+    <input type="radio" name="pd__strategy" id="pd__strategy-burst" value="burst" checked>
+    <label for="pd__strategy-burst">Burst</label>
+    <input type="radio" name="pd__strategy" id="pd__strategy-adaptive" value="adaptive">
+    <label for="pd__strategy-adaptive">Adaptive</label>
+    <a class="pd__q">?</a>
   </div>
 
   <div>
