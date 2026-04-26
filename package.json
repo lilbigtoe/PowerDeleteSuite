@@ -1,0 +1,12 @@
+{
+  "name": "power-delete-suite",
+  "version": "1.4.11",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --outfile=powerdeletesuite.js --loader:.css=text --loader:.html=text",
+    "watch": "esbuild src/index.js --bundle --outfile=powerdeletesuite.js --loader:.css=text --loader:.html=text --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
+}
