@@ -1,9 +1,6 @@
 export const ui = (_pd) => ({
   updateDisplay() {
-    var throttleNote =
-      _pd.rateLimitRemaining < 20
-        ? " → throttling (" + Math.floor(_pd.rateLimitRemaining) + " credits left)"
-        : "";
+    var spinnerChar = _pd.spinnerFrame ? " " + _pd.spinnerFrame : "";
     $("#pd__central h2")
       .first()
       .html(
@@ -16,7 +13,7 @@ export const ui = (_pd) => ({
           _pd.task.paths.sorts[0] +
           "/" +
           _pd.task.paths.timeframes[0] +
-          throttleNote +
+          spinnerChar +
           "</small>",
       );
     _pd.task.info.numPages =
@@ -93,6 +90,36 @@ export const ui = (_pd) => ({
       _pd.task.info.donePages;
     document.title = _pd.config.user + " | " + _pd.task.info.ajaxCalls;
   },
+  startSpinner() {
+    var frames = ["|", "/", "-", "\\"];
+    var frameIndex = 0;
+    var lastAdvance = 0;
+    _pd.spinnerFrame = frames[0];
+    if (_pd.spinnerTimer) clearInterval(_pd.spinnerTimer);
+    _pd.spinnerTimer = setInterval(function () {
+      if (_pd.cooldownTimer) return;
+      var speed = _pd.baseDelay >= 15000 ? 1500 : _pd.baseDelay >= 6000 ? 600 : 150;
+      var now = Date.now();
+      if (now - lastAdvance >= speed) {
+        frameIndex = (frameIndex + 1) % frames.length;
+        _pd.spinnerFrame = frames[frameIndex];
+        lastAdvance = now;
+      }
+      var paths = _pd.task && _pd.task.paths;
+      if (paths) {
+        $("#pd__central h2").first().find("small").text(
+          paths.sections[0] + "/" + paths.sorts[0] + "/" + paths.timeframes[0] + " " + _pd.spinnerFrame
+        );
+      }
+    }, 150);
+  },
+  stopSpinner() {
+    if (_pd.spinnerTimer) {
+      clearInterval(_pd.spinnerTimer);
+      _pd.spinnerTimer = null;
+    }
+    _pd.spinnerFrame = "";
+  },
   startCooldownTimer(ms) {
     if (_pd.cooldownTimer) {
       clearInterval(_pd.cooldownTimer);
@@ -114,6 +141,7 @@ export const ui = (_pd) => ({
     }, 1000);
   },
   done() {
+    _pd.ui.stopSpinner();
     _pd.ui.updateDisplay();
     window.pd_processing = false;
     document.title =

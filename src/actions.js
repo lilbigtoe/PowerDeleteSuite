@@ -14,7 +14,6 @@ function adaptiveDelay(_pd, jqXHR) {
   const remaining = parseFloat(
     (jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100"
   );
-  _pd.rateLimitRemaining = remaining;
   if (remaining < 10) return 15000;
   if (remaining < 20) return 6000;
   return 3000;

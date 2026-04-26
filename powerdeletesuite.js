@@ -422,6 +422,7 @@
         if (validation.valid) {
           $("#pd__central .complete, #pd__form").hide();
           $("#pd__central .processing").show();
+          _pd.ui.startSpinner();
           _pd.actions.page.next();
         } else {
           alert(validation.reason);
@@ -548,7 +549,6 @@
     const remaining = parseFloat(
       jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining") || "100"
     );
-    _pd.rateLimitRemaining = remaining;
     if (remaining < 10) return 15e3;
     if (remaining < 20) return 6e3;
     return 3e3;
@@ -822,9 +822,9 @@
   // src/ui.js
   var ui = (_pd) => ({
     updateDisplay() {
-      var throttleNote = _pd.rateLimitRemaining < 20 ? " \u2192 throttling (" + Math.floor(_pd.rateLimitRemaining) + " credits left)" : "";
+      var spinnerChar = _pd.spinnerFrame ? " " + _pd.spinnerFrame : "";
       $("#pd__central h2").first().html(
-        "Power Delete Suite v" + _pd.version + " <br/><small>" + _pd.task.paths.sections[0] + "/" + _pd.task.paths.sorts[0] + "/" + _pd.task.paths.timeframes[0] + throttleNote + "</small>"
+        "Power Delete Suite v" + _pd.version + " <br/><small>" + _pd.task.paths.sections[0] + "/" + _pd.task.paths.sorts[0] + "/" + _pd.task.paths.timeframes[0] + spinnerChar + "</small>"
       );
       _pd.task.info.numPages = _pd.task.info.donePages + (_pd.task.paths.sections.length - 1) * 4 + _pd.task.paths.sorts.length;
       $("#progress_page .bar").css(
@@ -864,6 +864,36 @@
       _pd.task.info.ajaxCalls = _pd.task.info.errors + _pd.task.info.edited + _pd.task.info.deleted + _pd.task.info.donePages;
       document.title = _pd.config.user + " | " + _pd.task.info.ajaxCalls;
     },
+    startSpinner() {
+      var frames = ["|", "/", "-", "\\"];
+      var frameIndex = 0;
+      var lastAdvance = 0;
+      _pd.spinnerFrame = frames[0];
+      if (_pd.spinnerTimer) clearInterval(_pd.spinnerTimer);
+      _pd.spinnerTimer = setInterval(function() {
+        if (_pd.cooldownTimer) return;
+        var speed = _pd.baseDelay >= 15e3 ? 1500 : _pd.baseDelay >= 6e3 ? 600 : 150;
+        var now = Date.now();
+        if (now - lastAdvance >= speed) {
+          frameIndex = (frameIndex + 1) % frames.length;
+          _pd.spinnerFrame = frames[frameIndex];
+          lastAdvance = now;
+        }
+        var paths = _pd.task && _pd.task.paths;
+        if (paths) {
+          $("#pd__central h2").first().find("small").text(
+            paths.sections[0] + "/" + paths.sorts[0] + "/" + paths.timeframes[0] + " " + _pd.spinnerFrame
+          );
+        }
+      }, 150);
+    },
+    stopSpinner() {
+      if (_pd.spinnerTimer) {
+        clearInterval(_pd.spinnerTimer);
+        _pd.spinnerTimer = null;
+      }
+      _pd.spinnerFrame = "";
+    },
     startCooldownTimer(ms) {
       if (_pd.cooldownTimer) {
         clearInterval(_pd.cooldownTimer);
@@ -885,6 +915,7 @@
       }, 1e3);
     },
     done() {
+      _pd.ui.stopSpinner();
       _pd.ui.updateDisplay();
       window.pd_processing = false;
       document.title = $("#header-bottom-right .user a").first().text() + " | Power Delete Suite";

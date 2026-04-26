@@ -197,6 +197,7 @@ export const setup = (_pd) => ({
       if (validation.valid) {
         $("#pd__central .complete, #pd__form").hide();
         $("#pd__central .processing").show();
+        _pd.ui.startSpinner();
         _pd.actions.page.next();
       } else {
         alert(validation.reason);
