@@ -88,6 +88,8 @@ export const helpers = (_pd) => ({
           selector = "*[name='" + setting.name + "']";
         if (setting.value == "on" || setting.value === "") {
           $(selector).prop("checked", true);
+        } else if ($(selector).is('[type="radio"]')) {
+          $(selector).filter('[value="' + setting.value + '"]').prop("checked", true);
         } else {
           $(selector).val(setting.value);
         }
