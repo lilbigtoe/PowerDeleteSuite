@@ -64,6 +64,15 @@
 
   <hr/>
 
+  <div data-help="Burst: no delay, processes as fast as possible, pauses when rate limited. Hybrid: fast until credits run low, then throttles. Adaptive: paces evenly using rate limit headers throughout.">
+    <label for="pd__strategy">Rate limit:</label>
+    <select id="pd__strategy" name="pd__strategy">
+      <option value="burst">Burst</option>
+      <option value="hybrid" selected>Hybrid</option>
+      <option value="adaptive">Adaptive</option>
+    </select><a class="pd__q">?</a>
+  </div>
+
   <div>
     <button>Process</button><input checked type="checkbox" id="pd__remember" name="pd__remember" class="ind"><label for="pd__remember" data-help="This will store data on your local computer. It will NOT transmit any of this data.">Remember Settings<a class="pd__q">?</a></label>
   </div>

@@ -133,6 +133,7 @@ export const setup = (_pd) => ({
         isRemovingComments: $("#pd__comments").is(":checked"),
         isEditing: $("#pd__comments-edit").is(":checked"),
         editText: $("#pd__comments-edit-text").val(),
+        strategy: $("#pd__strategy").val() || "hybrid",
       },
       paths: {
         sections:
@@ -197,6 +198,7 @@ export const setup = (_pd) => ({
       if (validation.valid) {
         $("#pd__central .complete, #pd__form").hide();
         $("#pd__central .processing").show();
+        _pd.rateStatus = _pd.task.config.strategy === "burst" ? "burst" : "pacing";
         _pd.ui.startSpinner();
         _pd.actions.page.next();
       } else {
@@ -207,7 +209,7 @@ export const setup = (_pd) => ({
       e.preventDefault();
       alert($(this).closest("[data-help]").attr("data-help"));
     });
-    $("#pd__form input").change(function () {
+    $("#pd__form input, #pd__strategy").change(function () {
       _pd.helpers.saveSettings();
     });
     $(".mass_sel").click(function () {

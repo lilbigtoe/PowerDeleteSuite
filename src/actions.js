@@ -13,16 +13,27 @@ function retryDelay(retries, jqXHR) {
 const MIN_DELAY = 500;
 const MAX_DELAY = 30000;
 
-function adaptiveDelay(jqXHR) {
+function adaptiveDelay(jqXHR, strategy) {
   const remaining = parseFloat(
     (jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100"
   );
   const reset = parseFloat(
     (jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset")) || "60"
   );
+
+  if (strategy === "burst") return 0;
+
+  if (strategy === "hybrid" && remaining > 25) return MIN_DELAY;
+
   const safeRemaining = Math.max(remaining - 5, 1);
   const delay = Math.round((reset * 1000) / safeRemaining);
   return Math.min(Math.max(delay, MIN_DELAY), MAX_DELAY);
+}
+
+function rateStatus(delay, strategy) {
+  if (strategy === "burst" || delay <= MIN_DELAY) return "burst";
+  if (delay > 3000) return "throttling";
+  return "pacing";
 }
 
 function setCooldown(_pd, ms) {
@@ -87,7 +98,8 @@ export const actions = (_pd) => ({
         },
       }).then(
         function (resp, _status, jqXHR) {
-          _pd.baseDelay = adaptiveDelay(jqXHR);
+          _pd.baseDelay = adaptiveDelay(jqXHR, _pd.task.config.strategy);
+          _pd.rateStatus = rateStatus(_pd.baseDelay, _pd.task.config.strategy);
           if (resp.data) {
             var children = resp.data.children;
             _pd.task.info.donePages++;
@@ -285,7 +297,7 @@ export const actions = (_pd) => ({
         _pd.task.after = _pd.task.items[0].data.name;
         _pd.actions.children.handleSingle();
       }
-    }, (_pd.baseDelay || 3000) * Math.pow(2, retries) + cooldownDelay(_pd));
+    }, (_pd.task.config.strategy === "burst" ? 0 : (_pd.baseDelay || 3000)) * Math.pow(2, retries) + cooldownDelay(_pd));
   },
   edit(item, retries = 0) {
     setTimeout(() => {
@@ -330,6 +342,6 @@ export const actions = (_pd) => ({
         _pd.task.items[0].pdEdited = true;
         _pd.actions.children.handleSingle();
       }
-    }, (_pd.baseDelay || 3000) * Math.pow(2, retries) + cooldownDelay(_pd));
+    }, (_pd.task.config.strategy === "burst" ? 0 : (_pd.baseDelay || 3000)) * Math.pow(2, retries) + cooldownDelay(_pd));
   },
 });

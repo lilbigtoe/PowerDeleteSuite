@@ -1,6 +1,8 @@
 export const ui = (_pd) => ({
   updateDisplay() {
-    var spinnerChar = _pd.spinnerFrame ? " " + _pd.spinnerFrame : "";
+    var spinnerChar = _pd.spinnerFrame
+      ? " " + _pd.spinnerFrame + " " + (_pd.rateStatus || "burst")
+      : "";
     $("#pd__central h2")
       .first()
       .html(
@@ -98,7 +100,8 @@ export const ui = (_pd) => ({
     if (_pd.spinnerTimer) clearInterval(_pd.spinnerTimer);
     _pd.spinnerTimer = setInterval(function () {
       if (_pd.cooldownTimer) return;
-      var speed = _pd.baseDelay >= 15000 ? 1500 : _pd.baseDelay >= 6000 ? 600 : 150;
+      var status = _pd.rateStatus || "burst";
+      var speed = status === "throttling" ? 800 : status === "pacing" ? 300 : 100;
       var now = Date.now();
       if (now - lastAdvance >= speed) {
         frameIndex = (frameIndex + 1) % frames.length;
@@ -108,10 +111,10 @@ export const ui = (_pd) => ({
       var paths = _pd.task && _pd.task.paths;
       if (paths) {
         $("#pd__central h2").first().find("small").text(
-          paths.sections[0] + "/" + paths.sorts[0] + "/" + paths.timeframes[0] + " " + _pd.spinnerFrame
+          paths.sections[0] + "/" + paths.sorts[0] + "/" + paths.timeframes[0] + " " + _pd.spinnerFrame + " " + status
         );
       }
-    }, 150);
+    }, 100);
   },
   stopSpinner() {
     if (_pd.spinnerTimer) {
