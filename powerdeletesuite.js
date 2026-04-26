@@ -1,3 +1,23 @@
+var MAX_RETRIES = 5;
+
+function backoff(retries) {
+  return Math.min(3000 * Math.pow(2, retries), 30000);
+}
+
+function retryDelay(retries, jqXHR) {
+  var rateLimitReset = jqXHR && parseInt(jqXHR.getResponseHeader("x-ratelimit-reset") || "0") * 1000;
+  var retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1000;
+  return rateLimitReset || retryAfter || backoff(retries);
+}
+
+function setCooldown(ms) {
+  pd.cooldownUntil = Date.now() + ms;
+}
+
+function cooldownDelay() {
+  return Math.max(0, (pd.cooldownUntil || 0) - Date.now());
+}
+
 var pd = {
   version: "1.4.11",
   bookmarkver: "1.4",
@@ -696,7 +716,8 @@ var pd = {
         }
         return true;
       },
-      handle: function () {
+      handle: function (retries) {
+        retries = retries || 0;
         pd.task.pageCalls++;
         $.ajax({
           url: pd.endpoints[pd.task.paths.sections[0]],
@@ -714,51 +735,50 @@ var pd = {
             sort: pd.task.paths.sorts[0],
             t: pd.task.paths.timeframes[0],
           },
-        }).then(
-          function (resp) {
-            if (resp.data) {
-              var children = resp.data.children;
-              pd.task.info.donePages++;
-              if (children.length > 0) {
-                pd.task.info.doneItems = 0;
-                pd.task.info.numItems = children.length;
-                pd.task.items = children;
-                pd.actions.children.handleGroup();
-              } else {
-                pd.task.after = "";
-                pd.actions.page.shift();
-                pd.actions.page.next();
-              }
+        }).done(function (resp) {
+          if (resp.data) {
+            var children = resp.data.children;
+            pd.task.info.donePages++;
+            if (children.length > 0) {
+              pd.task.info.doneItems = 0;
+              pd.task.info.numItems = children.length;
+              pd.task.items = children;
+              pd.actions.children.handleGroup();
             } else {
-              pd.task.info.errors++;
-              if (
-                confirm(
-                  "Reddit seems to be under heavy load. Would you like to continue processing?"
-                )
-              ) {
-                pd.actions.page.shift();
-                pd.actions.page.handle();
-              } else {
-                pd.ui.done();
-              }
+              pd.task.after = "";
+              pd.actions.page.shift();
+              pd.actions.page.next();
             }
-          },
-          function () {
+          } else if (retries < MAX_RETRIES) {
             pd.task.info.errors++;
-            if (
-              confirm(
-                "Error getting " +
-                  pd.task.paths.sections[0] +
-                  " page. Would you like to retry?"
-              )
-            ) {
-              pd.actions.page.handle();
+            setTimeout(function () { pd.actions.page.handle(retries + 1); }, backoff(retries));
+          } else {
+            pd.task.info.errors++;
+            if (confirm("Reddit seems to be under heavy load. Would you like to continue processing?")) {
+              pd.actions.page.shift();
+              pd.actions.page.handle(0);
+            } else {
+              pd.ui.done();
+            }
+          }
+        }).fail(function (jqXHR) {
+          pd.task.info.errors++;
+          if (jqXHR.status === 429) {
+            var delay = retryDelay(retries, jqXHR);
+            setCooldown(delay);
+            pd.ui.startCooldownTimer(delay);
+          }
+          if (retries < MAX_RETRIES) {
+            setTimeout(function () { pd.actions.page.handle(retries + 1); }, retryDelay(retries, jqXHR));
+          } else {
+            if (confirm("Error getting " + pd.task.paths.sections[0] + " page. Would you like to retry?")) {
+              pd.actions.page.handle(0);
             } else {
               pd.actions.page.shift();
               pd.actions.page.next();
             }
           }
-        );
+        });
       },
     },
     children: {
@@ -871,8 +891,9 @@ var pd = {
         }
       },
     },
-    delete: function (item) {
-      setTimeout(() => {
+    delete: function (item, retries) {
+      retries = retries || 0;
+      setTimeout(function () {
         if (pd.performActions) {
           $.ajax({
             url: "/api/del",
@@ -883,36 +904,37 @@ var pd = {
               uh: pd.config.uh,
               renderstyle: "html",
             },
-          }).then(
-            function () {
-              pd.task.items[0].pdDeleted = true;
-              pd.actions.children.handleSingle();
-            },
-            function () {
-              pd.task.info.errors++;
-              if (
-                confirm(
-                  "Error deleting " +
-                    (item.kind == "t3" ? "post" : "comment") +
-                    ", would you like to retry?"
-                )
-              ) {
-                pd.actions.children.handleSingle();
+          }).done(function () {
+            pd.task.items[0].pdDeleted = true;
+            pd.actions.children.handleSingle();
+          }).fail(function (jqXHR) {
+            pd.task.info.errors++;
+            if (jqXHR.status === 429) {
+              var delay = retryDelay(retries, jqXHR);
+              setCooldown(delay);
+              pd.ui.startCooldownTimer(delay);
+            }
+            if (retries < MAX_RETRIES) {
+              pd.actions.delete(item, retries + 1);
+            } else {
+              if (confirm("Error deleting " + (item.kind == "t3" ? "post" : "comment") + ", would you like to retry?")) {
+                pd.actions.delete(item, 0);
               } else {
                 pd.actions.children.finishItem();
                 pd.actions.children.handleGroup();
               }
             }
-          );
+          });
         } else {
           pd.task.items[0].pdDeleted = true;
           pd.task.after = pd.task.items[0].data.name;
           pd.actions.children.handleSingle();
         }
-      }, 5000);
+      }, backoff(retries) + cooldownDelay());
     },
-    edit: function (item) {
-      setTimeout(() => {
+    edit: function (item, retries) {
+      retries = retries || 0;
+      setTimeout(function () {
         if (pd.performActions) {
           var editString = pd.task.config.editText ||
             pd.editStrings[Math.floor(Math.random() * pd.editStrings.length)];
@@ -927,30 +949,30 @@ var pd = {
               uh: pd.config.uh,
               renderstyle: "html",
             },
-          }).then(
-            function () {
-              pd.task.items[0].pdEdited = true;
-              pd.actions.children.handleSingle();
-            },
-            function () {
-              pd.task.info.errors++;
-              if (
-                !confirm(
-                  "Error editing " +
-                    (item.kind == "t3" ? "post" : "comment") +
-                    ", would you like to retry?"
-                )
-              ) {
+          }).done(function () {
+            pd.task.items[0].pdEdited = true;
+            pd.actions.children.handleSingle();
+          }).fail(function (jqXHR) {
+            pd.task.info.errors++;
+            if (jqXHR.status === 429) {
+              var delay = retryDelay(retries, jqXHR);
+              setCooldown(delay);
+              pd.ui.startCooldownTimer(delay);
+            }
+            if (retries < MAX_RETRIES) {
+              pd.actions.edit(item, retries + 1);
+            } else {
+              if (!confirm("Error editing " + (item.kind == "t3" ? "post" : "comment") + ", would you like to retry?")) {
                 item.pdEdited = true;
               }
               pd.actions.children.handleSingle();
             }
-          );
+          });
         } else {
           pd.task.items[0].pdEdited = true;
           pd.actions.children.handleSingle();
         }
-      }, 5000);
+      }, backoff(retries) + cooldownDelay());
     },
   },
   ui: {
@@ -1042,6 +1064,26 @@ var pd = {
         pd.task.info.deleted +
         pd.task.info.donePages;
       document.title = pd.config.user + " | " + pd.task.info.ajaxCalls;
+    },
+    startCooldownTimer: function (ms) {
+      if (pd.cooldownTimer) {
+        clearInterval(pd.cooldownTimer);
+      }
+      var endsAt = Date.now() + ms;
+      pd.cooldownTimer = setInterval(function () {
+        var remaining = Math.ceil((endsAt - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(pd.cooldownTimer);
+          pd.cooldownTimer = null;
+          document.title = pd.config.user + " | " + pd.task.info.ajaxCalls;
+          $("#pd__central h2").first().find("small").text(
+            pd.task.paths.sections[0] + "/" + pd.task.paths.sorts[0] + "/" + pd.task.paths.timeframes[0]
+          );
+        } else {
+          document.title = pd.config.user + " | Rate limited - resuming in " + remaining + "s";
+          $("#pd__central h2").first().find("small").text("Rate limited - resuming in " + remaining + "s");
+        }
+      }, 1000);
     },
     done: function () {
       pd.ui.updateDisplay();
