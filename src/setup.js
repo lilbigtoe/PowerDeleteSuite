@@ -1,3 +1,5 @@
+import stylesheet from "./stylesheet.css";
+import centralform from "./centralform.html";
 export const setup = (_pd) => ({
   basicSettings() {
     _pd.config = {
@@ -34,45 +36,24 @@ export const setup = (_pd) => ({
     _pd.setup.applyCentral();
   },
   applyStyles() {
-    $.ajax({
-      url: "https://raw.githubusercontent.com/mykola2312/PowerDeleteSuite/master/stylesheet.json",
-      context: $("#pd__style"),
-    }).then(
-      function (data) {
-        console.log(data);
-        $(this)[0].innerHTML = JSON.parse(data).data.stylesheet;
-        $("#pd__central").show();
-      },
-      function () {
-        alert("Error retrieving CSS from /r/PowerDeleteSuite");
-      },
-    );
+    $("#pd__style")[0].innerHTML = stylesheet;
+    $("#pd__central").show();
   },
   applyCentral() {
-    $.ajax({
-      url: "/r/PowerDeleteSuite/wiki/centralform.json",
-      context: $("#pd__central"),
-    }).then(
-      function (data) {
-        $(this).html($("<textarea/>").html(data.data.content_md).text());
-        if ($("#pd__style").html() === "") {
-          $(this).hide();
-        }
-        if (_pd.debugging) {
-          $(this).find(".debugging").removeClass("debugging");
-        }
-        $(this)
-          .find("h2")
-          .first()
-          .text("Power Delete Suite v" + _pd.version);
-        _pd.setup.applySubList();
-        _pd.setup.bindUI();
-        _pd.helpers.restoreSettings();
-      },
-      function () {
-        alert("Error retrieving markup from /r/PowerDeleteSuite");
-      },
-    );
+    $("#pd__central").html(centralform);
+    if ($("#pd__style").html() === "") {
+      $("#pd__central").hide();
+    }
+    if (_pd.debugging) {
+      $("#pd__central").find(".debugging").removeClass("debugging");
+    }
+    $("#pd__central")
+      .find("h2")
+      .first()
+      .text("Power Delete Suite v" + _pd.version);
+    _pd.setup.applySubList();
+    _pd.setup.bindUI();
+    _pd.helpers.restoreSettings();
   },
   applySubList() {
     var sub_arr = [],

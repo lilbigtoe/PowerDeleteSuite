@@ -255,6 +255,12 @@
     }
   });
 
+  // src/stylesheet.css
+  var stylesheet_default = '/* CSS FOR USERSCRIPT */\n\n#pd__central {\n    background: #fff;\n    border: 1px solid #ddd;\n    border-radius: 1em;\n    line-height: 2em;\n    margin: 20px;\n    margin-right: 320px;\n    padding: 20px;\n}\n\n.goodbye::after,\n.goodbye2::after,\n#pd__central::after {\n    content: "";\n    clear: left;\n    display: block;\n}\n\n.goodbye2 {\n    display: none;\n}\n\n.complete[style*="block"] .goodbye2 {\n    display: block;\n}\n\n.submit-bug {\n    float: left;\n    width: 50%;\n    padding: 20px;\n    box-sizing: border-box;\n}\n\n.faq {\n    float: left;\n    width: 50%;\n}\n\n.faq blockquote {\n    border-left: 3px solid #09f;\n    padding-left: 1.2em;\n    margin: .5em 0;\n}\n.faq p {\n    line-height: 1.1em;\n    text-indent: 1.5em;\n}\n\n.xt {\n    display: none;\n}\n.xt:checked~.xtr-section {\n    display: block;\n}\n.xt~label::after {\n    color: #09f;\n    content: "+";\n    font-weight: bold;\n    margin-left: .2em;\n}\n.xt:checked~label::after {\n    content: "-";\n}\n.xt.xtr {\n    display: inline-block;\n}\n.ind {\n    margin-left: 1em !important;\n}\n#pd__central input[type="checkbox"] {\n    margin-right: .5em;\n    position: relative;\n    top: 3px;\n}\nb.m {\n    color: #590;\n    margin-right: .4em;\n}\n#pd__central a {\n    cursor: pointer;\n}\n.xtr-section {\n    background: #eee;\n    display: none;\n    max-height: 20em;\n    overflow-y: auto;\n    padding: .5em 1em;\n}\n#pd__central textarea {\n    min-height: 3em;\n    min-width: 200px;\n    width: 50%;\n}\n#pd__central .label {\n    display: block;\n    text-align: center;\n}\n#pd__central .progress {\n    border: 1px solid #ccc;\n    border-radius: 0.5em;\n    height: 2em;\n    margin-bottom: 1em;\n    position: relative;\n}\n#pd__central .bar,\n#pd__central .text {\n    display: block;\n    height: 100%;\n    left: 0;\n    position: absolute;\n    top: 0;\n}\n#pd__central .bar {\n    background: #def;\n    z-index: 0;\n}\n#pd__central .text {\n    text-align: center;\n    width: 100%;\n    z-index: 1;\n}\n\n#pd__central .text::before {\n    content: attr(data-top)"/"attr(data-bottom);\n}\n\n.processing {\n    display: none;\n}\n\n.xtr-section a {\n    text-decoration: underline;\n}\n\n.xtr-section a.disabled,\n.xtr-section a.loading {\n    color: #999;\n}\n\n.gt-toggle+label {\n    cursor: pointer;\n    border-bottom: 1px dashed #333;\n}\n\n.gt-toggle+label::before {\n    content:"Less than";\n}\n.gt-toggle.greater+label::before {\n    content:"Greater than";\n}\n\n#pd__date-selector .gt-toggle+label::before {\n    content:"Older than";\n}\n#pd__date-selector .gt-toggle.greater+label::before {\n    content:"Newer than";\n}\n\n.hidden {\n    display: none;\n}\n\n.debugging {\n    display: none;\n}\n\n.progress__byline {\n    display: table;\n    border-collapse: collapse;\n    width: 100%;\n    margin-top: 2em;\n}\n\n.progress__byline .row {\n    display: table-row;\n    width: 100%;\n}\n\n.progress__byline .row .type {\n    display: none;\n    border-top: 1px solid #ccc;\n    text-align: center;\n    font-size: 10px;\n}\n\n.progress__byline .row .type.visible {\n    display: table-cell;\n}\n\n.progress__byline .row .type .num::before {\n    content: attr(data-num);\n}\n\n.progress__byline .num {\n    display: block;\n    font-weight: bold;\n    font-size: 1.2em;\n}\n\n.progress__byline .ignored .reasons {\n    margin: 0;\n    padding: 0;\n    line-height: 1em;\n    color: #999;\n}\n.progress__byline .ignored .reasons *::after {\n    content: attr(data-num);\n}\n\n#progress__item-output.onecol>div {\n    width: 100%;\n}\n\n#progress__item-output.twocol>div {\n    float: left;\n    width: 50%;\n}\n\n#progress__item-output::after {\n    content: "";\n    display: block;\n    clear: both;\n}\n\n#progress__item-output a {\n    display: block;\n}\n\n#pd__central hr {\n    margin: 2em 0 1em;\n}\n\n.export-button {\n    display: block;\n    width: 250px;\n    text-align: center;\n    background: #09f;\n    color: #fff;\n    font-size: 14px;\n    padding: 5px;\n    margin: 0 auto;\n    border-radius: 4px;\n    font-weight: bold;\n}\n';
+
+  // src/centralform.html
+  var centralform_default = '<h2>Power Delete Suite</h2>\n\n<form id="pd__form">\n\n  <p>\n    Please review all options before pressing "Process". This process is <b>NOT</b> reversible.\n  </p>\n\n  <hr/>\n\n  <h3>Actions to perform</h3>\n\n  <div><input checked type="checkbox" id="pd__export" name="pd__export"><label for="pd__export">Prepare local backup of items</label></div>\n\n  <div><input checked type="checkbox" id="pd__submissions" name="pd__submissions"><label for="pd__submissions">Remove submissions</label></div>\n\n  <div><input checked type="checkbox" id="pd__comments" name="pd__comments"><label for="pd__comments">Remove comments</label></div>\n\n  <div data-help="If editing is enabled at the same time as deleting, the item will be edited BEFORE deleting it.">\n    <input class="xt xtr" type="checkbox" id="pd__comments-edit" name="pd__comments-edit"><label for="pd__comments-edit">Edit comments / self posts</label><a class="pd__q">?</a>\n    <div id="edit-form" class="xt xtr-section">\n      <textarea placeholder="Enter text to edit comments or self posts to." id="pd__comments-edit-text" name="pd__comments-edit-text"></textarea>\n    </div>\n  </div>\n\n  <hr/>\n\n  <h3>Filters</h3>\n\n  <div>\n    <input class="xt xtr" type="checkbox" id="pd__subreddits" name="pd__subreddits"><label for="pd__subreddits">Filter by subreddits</label>\n    <div id="pd__sub-list" class="xt xtr-section">\n      <b>Perform actions on any subreddit that is checked:</b>\n    </div>\n  </div>\n\n  <div>\n    <input class="xt xtr" type="checkbox" id="pd__score" name="pd__score"><label for="pd__score">Filter by score</label>\n    <div id="pd__score-selector" class="xtr-section">\n      <div><b>Perform actions on items with a score:</b></div>\n      <input class="gt-toggle hidden greater" id="pd__score-dirtoggle" name="pd__score-dirtoggle" type="checkbox" checked /><label for="pd__score-dirtoggle" title="toggle"></label> <input id="pd__score-num" type="tel" placeholder="200" name="pd__score-num" class="num-only"/>\n    </div>\n  </div>\n\n  <div>\n    <input class="xt xtr" type="checkbox" id="pd__date" name="pd__date"><label for="pd__date">Filter by date</label>\n    <div id="pd__date-selector" class="xtr-section">\n      <div><b>Perform actions on items with a date time:</b></div>\n      <input class="gt-toggle hidden greater" id="pd__date-dirtoggle" name="pd__date-dirtoggle" type="checkbox" checked /><label for="pd__date-dirtoggle" title="toggle"></label> <input id="pd__date-num" type="tel" placeholder="60" value="60" name="pd__date-num" class="num-only"/> <span>minutes ago</span>\n       <div>Set to: <a class="pd__insert" data-target="#pd__date-num" data-value="60">1 hour</a>\n       <a class="pd__insert" data-target="#pd__date-num" data-value="1440">1 day</a>\n       <a class="pd__insert" data-target="#pd__date-num" data-value="10080">1 week</a>\n       <a class="pd__insert" data-target="#pd__date-num" data-value="43200">30 days</a>\n       <a class="pd__insert" data-target="#pd__date-num" data-value="262800">half year</a>\n       <a class="pd__insert" data-target="#pd__date-num" data-value="525600">year</a></div>\n    </div>\n  </div>\n\n  <div><input checked type="checkbox" id="pd__gilded" name="pd__gilded"><label for="pd__gilded">Do not perform actions on gilded</label></div>\n\n  <div><input checked type="checkbox" id="pd__saved" name="pd__saved"><label for="pd__saved">Do not perform actions on saved</label></div>\n\n  <div><input checked type="checkbox" id="pd__mod" name="pd__mod"><label for="pd__mod">Do not perform actions on mod distinguished</label></div>\n\n  <hr/>\n\n  <div>\n    <button>Process</button><input checked type="checkbox" id="pd__remember" name="pd__remember" class="ind"><label for="pd__remember" data-help="This will store data on your local computer. It will NOT transmit any of this data.">Remember Settings<a class="pd__q">?</a></label>\n  </div>\n\n</form>\n\n<div class="processing">\n\n  <span class="label">Page Progress</span>\n  <div id="progress_page" class="progress">\n    <span class="bar"></span>\n    <span class="text" data-top="" data-bottom=""></span>\n  </div>\n\n  <span class="label">Page Item Progress</span>\n  <div id="progress_item" class="progress">\n    <span class="bar"></span>\n    <span class="text" data-top="" data-bottom=""></span>\n  </div>\n\n  <div class="progress__byline"><div class="row">\n     <span class="type errors"><span class="num" data-num=""></span> errors</span>\n     <span class="type exported"><span class="num" data-num=""></span> exported</span>\n     <span class="type edited"><span class="num" data-num=""></span> edited</span>\n     <span class="type deleted"><span class="num" data-num=""></span> deleted</span>\n     <span class="type ignored"><span class="num" data-num=""></span> ignored<span class="reasons"></span></span>\n  </div></div>\n\n</div>\n\n<div class="complete">\n\n  <div class="summary"></div>\n\n  <div class="progress__byline"><div class="row">\n     <span class="type errors"><span class="num" data-num=""></span> errors</span>\n     <span class="type exported"><span class="num" data-num=""></span> exported</span>\n     <span class="type edited"><span class="num" data-num=""></span> edited</span>\n     <span class="type deleted"><span class="num" data-num=""></span> deleted</span>\n     <span class="type ignored"><span class="num" data-num=""></span> ignored<span class="reasons"></span></span>\n  </div></div>\n\n  <div class="goodbye"></div>\n\n</div>\n';
+
   // src/setup.js
   var setup = (_pd) => ({
     basicSettings() {
@@ -285,42 +291,21 @@
       _pd.setup.applyCentral();
     },
     applyStyles() {
-      $.ajax({
-        url: "https://raw.githubusercontent.com/mykola2312/PowerDeleteSuite/master/stylesheet.json",
-        context: $("#pd__style")
-      }).then(
-        function(data) {
-          console.log(data);
-          $(this)[0].innerHTML = JSON.parse(data).data.stylesheet;
-          $("#pd__central").show();
-        },
-        function() {
-          alert("Error retrieving CSS from /r/PowerDeleteSuite");
-        }
-      );
+      $("#pd__style")[0].innerHTML = stylesheet_default;
+      $("#pd__central").show();
     },
     applyCentral() {
-      $.ajax({
-        url: "/r/PowerDeleteSuite/wiki/centralform.json",
-        context: $("#pd__central")
-      }).then(
-        function(data) {
-          $(this).html($("<textarea/>").html(data.data.content_md).text());
-          if ($("#pd__style").html() === "") {
-            $(this).hide();
-          }
-          if (_pd.debugging) {
-            $(this).find(".debugging").removeClass("debugging");
-          }
-          $(this).find("h2").first().text("Power Delete Suite v" + _pd.version);
-          _pd.setup.applySubList();
-          _pd.setup.bindUI();
-          _pd.helpers.restoreSettings();
-        },
-        function() {
-          alert("Error retrieving markup from /r/PowerDeleteSuite");
-        }
-      );
+      $("#pd__central").html(centralform_default);
+      if ($("#pd__style").html() === "") {
+        $("#pd__central").hide();
+      }
+      if (_pd.debugging) {
+        $("#pd__central").find(".debugging").removeClass("debugging");
+      }
+      $("#pd__central").find("h2").first().text("Power Delete Suite v" + _pd.version);
+      _pd.setup.applySubList();
+      _pd.setup.bindUI();
+      _pd.helpers.restoreSettings();
     },
     applySubList() {
       var sub_arr = [], i, sid;
@@ -559,6 +544,15 @@
     const retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1e3;
     return rateLimitReset || retryAfter || backoff(retries);
   }
+  function adaptiveDelay(_pd, jqXHR) {
+    const remaining = parseFloat(
+      jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining") || "100"
+    );
+    _pd.rateLimitRemaining = remaining;
+    if (remaining < 10) return 15e3;
+    if (remaining < 20) return 6e3;
+    return 3e3;
+  }
   function setCooldown(_pd, ms) {
     _pd.cooldownUntil = Date.now() + ms;
   }
@@ -609,7 +603,8 @@
             t: _pd.task.paths.timeframes[0]
           }
         }).then(
-          function(resp) {
+          function(resp, _status, jqXHR) {
+            _pd.baseDelay = adaptiveDelay(_pd, jqXHR);
             if (resp.data) {
               var children = resp.data.children;
               _pd.task.info.donePages++;
@@ -641,6 +636,7 @@
             if (jqXHR.status === 429) {
               var delay = retryDelay(retries, jqXHR);
               setCooldown(_pd, delay);
+              _pd.ui.startCooldownTimer(delay);
             }
             if (retries < MAX_RETRIES) {
               setTimeout(() => _pd.actions.page.handle(retries + 1), retryDelay(retries, jqXHR));
@@ -755,7 +751,9 @@
             function(jqXHR) {
               _pd.task.info.errors++;
               if (jqXHR.status === 429) {
-                setCooldown(_pd, retryDelay(retries, jqXHR));
+                var delay = retryDelay(retries, jqXHR);
+                setCooldown(_pd, delay);
+                _pd.ui.startCooldownTimer(delay);
               }
               if (retries < MAX_RETRIES) {
                 _pd.actions.delete(item, retries + 1);
@@ -774,7 +772,7 @@
           _pd.task.after = _pd.task.items[0].data.name;
           _pd.actions.children.handleSingle();
         }
-      }, backoff(retries) + cooldownDelay(_pd));
+      }, (_pd.baseDelay || 3e3) * Math.pow(2, retries) + cooldownDelay(_pd));
     },
     edit(item, retries = 0) {
       setTimeout(() => {
@@ -799,7 +797,9 @@
             function(jqXHR) {
               _pd.task.info.errors++;
               if (jqXHR.status === 429) {
-                setCooldown(_pd, retryDelay(retries, jqXHR));
+                var delay = retryDelay(retries, jqXHR);
+                setCooldown(_pd, delay);
+                _pd.ui.startCooldownTimer(delay);
               }
               if (retries < MAX_RETRIES) {
                 _pd.actions.edit(item, retries + 1);
@@ -815,15 +815,16 @@
           _pd.task.items[0].pdEdited = true;
           _pd.actions.children.handleSingle();
         }
-      }, backoff(retries) + cooldownDelay(_pd));
+      }, (_pd.baseDelay || 3e3) * Math.pow(2, retries) + cooldownDelay(_pd));
     }
   });
 
   // src/ui.js
   var ui = (_pd) => ({
     updateDisplay() {
+      var throttleNote = _pd.rateLimitRemaining < 20 ? " \u2192 throttling (" + Math.floor(_pd.rateLimitRemaining) + " credits left)" : "";
       $("#pd__central h2").first().html(
-        "Power Delete Suite v" + _pd.version + " <br/><small>" + _pd.task.paths.sections[0] + "/" + _pd.task.paths.sorts[0] + "/" + _pd.task.paths.timeframes[0] + "</small>"
+        "Power Delete Suite v" + _pd.version + " <br/><small>" + _pd.task.paths.sections[0] + "/" + _pd.task.paths.sorts[0] + "/" + _pd.task.paths.timeframes[0] + throttleNote + "</small>"
       );
       _pd.task.info.numPages = _pd.task.info.donePages + (_pd.task.paths.sections.length - 1) * 4 + _pd.task.paths.sorts.length;
       $("#progress_page .bar").css(
@@ -862,6 +863,26 @@
       );
       _pd.task.info.ajaxCalls = _pd.task.info.errors + _pd.task.info.edited + _pd.task.info.deleted + _pd.task.info.donePages;
       document.title = _pd.config.user + " | " + _pd.task.info.ajaxCalls;
+    },
+    startCooldownTimer(ms) {
+      if (_pd.cooldownTimer) {
+        clearInterval(_pd.cooldownTimer);
+      }
+      var endsAt = Date.now() + ms;
+      _pd.cooldownTimer = setInterval(function() {
+        var remaining = Math.ceil((endsAt - Date.now()) / 1e3);
+        if (remaining <= 0) {
+          clearInterval(_pd.cooldownTimer);
+          _pd.cooldownTimer = null;
+          document.title = _pd.config.user + " | " + _pd.task.info.ajaxCalls;
+          $("#pd__central h2").first().find("small").text(
+            _pd.task.paths.sections[0] + "/" + _pd.task.paths.sorts[0] + "/" + _pd.task.paths.timeframes[0]
+          );
+        } else {
+          document.title = _pd.config.user + " | Rate limited - resuming in " + remaining + "s";
+          $("#pd__central h2").first().find("small").text("Rate limited - resuming in " + remaining + "s");
+        }
+      }, 1e3);
     },
     done() {
       _pd.ui.updateDisplay();

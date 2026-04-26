@@ -1,5 +1,9 @@
 export const ui = (_pd) => ({
   updateDisplay() {
+    var throttleNote =
+      _pd.rateLimitRemaining < 20
+        ? " → throttling (" + Math.floor(_pd.rateLimitRemaining) + " credits left)"
+        : "";
     $("#pd__central h2")
       .first()
       .html(
@@ -12,6 +16,7 @@ export const ui = (_pd) => ({
           _pd.task.paths.sorts[0] +
           "/" +
           _pd.task.paths.timeframes[0] +
+          throttleNote +
           "</small>",
       );
     _pd.task.info.numPages =
@@ -87,6 +92,26 @@ export const ui = (_pd) => ({
       _pd.task.info.deleted +
       _pd.task.info.donePages;
     document.title = _pd.config.user + " | " + _pd.task.info.ajaxCalls;
+  },
+  startCooldownTimer(ms) {
+    if (_pd.cooldownTimer) {
+      clearInterval(_pd.cooldownTimer);
+    }
+    var endsAt = Date.now() + ms;
+    _pd.cooldownTimer = setInterval(function () {
+      var remaining = Math.ceil((endsAt - Date.now()) / 1000);
+      if (remaining <= 0) {
+        clearInterval(_pd.cooldownTimer);
+        _pd.cooldownTimer = null;
+        document.title = _pd.config.user + " | " + _pd.task.info.ajaxCalls;
+        $("#pd__central h2").first().find("small").text(
+          _pd.task.paths.sections[0] + "/" + _pd.task.paths.sorts[0] + "/" + _pd.task.paths.timeframes[0]
+        );
+      } else {
+        document.title = _pd.config.user + " | Rate limited - resuming in " + remaining + "s";
+        $("#pd__central h2").first().find("small").text("Rate limited - resuming in " + remaining + "s");
+      }
+    }, 1000);
   },
   done() {
     _pd.ui.updateDisplay();

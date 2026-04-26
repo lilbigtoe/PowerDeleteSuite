@@ -10,6 +10,16 @@ function retryDelay(retries, jqXHR) {
   return rateLimitReset || retryAfter || backoff(retries);
 }
 
+function adaptiveDelay(_pd, jqXHR) {
+  const remaining = parseFloat(
+    (jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100"
+  );
+  _pd.rateLimitRemaining = remaining;
+  if (remaining < 10) return 15000;
+  if (remaining < 20) return 6000;
+  return 3000;
+}
+
 function setCooldown(_pd, ms) {
   _pd.cooldownUntil = Date.now() + ms;
 }
@@ -71,7 +81,8 @@ export const actions = (_pd) => ({
           t: _pd.task.paths.timeframes[0],
         },
       }).then(
-        function (resp) {
+        function (resp, _status, jqXHR) {
+          _pd.baseDelay = adaptiveDelay(_pd, jqXHR);
           if (resp.data) {
             var children = resp.data.children;
             _pd.task.info.donePages++;
@@ -103,6 +114,7 @@ export const actions = (_pd) => ({
           if (jqXHR.status === 429) {
             var delay = retryDelay(retries, jqXHR);
             setCooldown(_pd, delay);
+            _pd.ui.startCooldownTimer(delay);
           }
           if (retries < MAX_RETRIES) {
             setTimeout(() => _pd.actions.page.handle(retries + 1), retryDelay(retries, jqXHR));
@@ -247,7 +259,9 @@ export const actions = (_pd) => ({
           function (jqXHR) {
             _pd.task.info.errors++;
             if (jqXHR.status === 429) {
-              setCooldown(_pd, retryDelay(retries, jqXHR));
+              var delay = retryDelay(retries, jqXHR);
+              setCooldown(_pd, delay);
+              _pd.ui.startCooldownTimer(delay);
             }
             if (retries < MAX_RETRIES) {
               _pd.actions.delete(item, retries + 1);
@@ -266,7 +280,7 @@ export const actions = (_pd) => ({
         _pd.task.after = _pd.task.items[0].data.name;
         _pd.actions.children.handleSingle();
       }
-    }, backoff(retries) + cooldownDelay(_pd));
+    }, (_pd.baseDelay || 3000) * Math.pow(2, retries) + cooldownDelay(_pd));
   },
   edit(item, retries = 0) {
     setTimeout(() => {
@@ -293,7 +307,9 @@ export const actions = (_pd) => ({
           function (jqXHR) {
             _pd.task.info.errors++;
             if (jqXHR.status === 429) {
-              setCooldown(_pd, retryDelay(retries, jqXHR));
+              var delay = retryDelay(retries, jqXHR);
+              setCooldown(_pd, delay);
+              _pd.ui.startCooldownTimer(delay);
             }
             if (retries < MAX_RETRIES) {
               _pd.actions.edit(item, retries + 1);
@@ -309,6 +325,6 @@ export const actions = (_pd) => ({
         _pd.task.items[0].pdEdited = true;
         _pd.actions.children.handleSingle();
       }
-    }, backoff(retries) + cooldownDelay(_pd));
+    }, (_pd.baseDelay || 3000) * Math.pow(2, retries) + cooldownDelay(_pd));
   },
 });
