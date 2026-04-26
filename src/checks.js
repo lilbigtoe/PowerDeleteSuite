@@ -11,42 +11,15 @@ export const checks = (_pd) => ({
           )
         ) {
           alert(
-            'Sadly, there\'s no way to automatically update the bookmark. :/ Scroll down to the "Install PowerDeleteSuite" button on the github page. Replace your CURRENT bookmark with the one found there to install the latest bookmark.',
+            'Sadly, there\'s no way to automatically update the bookmark. :/ Go to the Github repo and replace your current bookmark with the latest one.',
           );
-          document.location.href = "https://github.com/j0be/PowerDeleteSuite";
+          document.location.href = "https://github.com/lilbigtoe/PowerDeleteSuite";
           return false;
         }
       }
       return true;
     }
-    function checkAppVersion() {
-      _pd.prevRunVersion = localStorage.getItem("pd_ver")
-        ? localStorage.getItem("pd_ver")
-        : "0";
-      localStorage.setItem("pd_ver", _pd.version);
-      if (_pd.version !== _pd.prevRunVersion) {
-        if (
-          confirm(
-            "You've gotten the latest update! You are now running PowerDeleteSuite v" +
-              _pd.version +
-              ". Would you like to open the changelog in a new tab?",
-          )
-        ) {
-          $.ajax({ url: "/r/PowerDeleteSuite/new.json" }).then(
-            function (data) {
-              window.open(
-                "https://reddit.com" + data.data.children[0].data.permalink,
-              );
-            },
-            function () {
-              window.open("https://reddit.com/r/PowerDeleteSuite");
-            },
-          );
-        }
-      }
-      return true;
-    }
-    return _pd.debugging || (checkBookmarkletVersion() && checkAppVersion());
+    return _pd.debugging || checkBookmarkletVersion();
   },
   location() {
     return (

@@ -41,7 +41,7 @@ pd.init = function () {
 
 pd.error = function () {
   var reset = confirm(
-    "We ran into an error. Why not tell /u/j0be what you were doing to break it?\r\n\r\nWould you like to restart the script?",
+    "We ran into an error. Would you like to restart the script?",
   );
   window.pd_processing = false;
   if (reset) {

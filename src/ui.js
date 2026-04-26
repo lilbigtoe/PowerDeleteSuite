@@ -174,22 +174,7 @@ export const ui = (_pd) => ({
       _pd.init();
     });
 
-    var numSubs = $("#pd__sub-list input:checked").length;
     $("#pd__sub-list input").prop("checked", false);
-    var debugInfo =
-      JSON.stringify($("#pd__form").serializeArray()) +
-      " number of subreddits: " +
-      numSubs;
-
-    $("#pd__central .complete .goodbye").html(
-      '<hr/><h3 class="submit-bug">' +
-        "<div>Having trouble?</div>" +
-        '<div><a href="https://www.reddit.com/message/compose?to=j0be&subject=PowerDeleteSuite%20Config&message=' +
-        encodeURIComponent(debugInfo) +
-        '" target="_blank">Send /u/j0be a message with your current settings.</a></div>' +
-        "<div><small>(for privacy, subreddit list is not included)</small></div>" +
-        "</h3>",
-    );
 
     if (_pd.task.config.isExporting && _pd.exportItems.length > 0) {
       $("#pd__central .complete .goodbye").prepend(
