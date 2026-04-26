@@ -545,13 +545,18 @@
     const retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1e3;
     return rateLimitReset || retryAfter || backoff(retries);
   }
-  function adaptiveDelay(_pd, jqXHR) {
+  var MIN_DELAY = 500;
+  var MAX_DELAY = 3e4;
+  function adaptiveDelay(jqXHR) {
     const remaining = parseFloat(
       jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining") || "100"
     );
-    if (remaining < 10) return 15e3;
-    if (remaining < 20) return 6e3;
-    return 3e3;
+    const reset = parseFloat(
+      jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset") || "60"
+    );
+    const safeRemaining = Math.max(remaining - 5, 1);
+    const delay = Math.round(reset * 1e3 / safeRemaining);
+    return Math.min(Math.max(delay, MIN_DELAY), MAX_DELAY);
   }
   function setCooldown(_pd, ms) {
     _pd.cooldownUntil = Date.now() + ms;
@@ -604,7 +609,7 @@
           }
         }).then(
           function(resp, _status, jqXHR) {
-            _pd.baseDelay = adaptiveDelay(_pd, jqXHR);
+            _pd.baseDelay = adaptiveDelay(jqXHR);
             if (resp.data) {
               var children = resp.data.children;
               _pd.task.info.donePages++;

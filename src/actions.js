@@ -10,13 +10,19 @@ function retryDelay(retries, jqXHR) {
   return rateLimitReset || retryAfter || backoff(retries);
 }
 
-function adaptiveDelay(_pd, jqXHR) {
+const MIN_DELAY = 500;
+const MAX_DELAY = 30000;
+
+function adaptiveDelay(jqXHR) {
   const remaining = parseFloat(
     (jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100"
   );
-  if (remaining < 10) return 15000;
-  if (remaining < 20) return 6000;
-  return 3000;
+  const reset = parseFloat(
+    (jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset")) || "60"
+  );
+  const safeRemaining = Math.max(remaining - 5, 1);
+  const delay = Math.round((reset * 1000) / safeRemaining);
+  return Math.min(Math.max(delay, MIN_DELAY), MAX_DELAY);
 }
 
 function setCooldown(_pd, ms) {
@@ -81,7 +87,7 @@ export const actions = (_pd) => ({
         },
       }).then(
         function (resp, _status, jqXHR) {
-          _pd.baseDelay = adaptiveDelay(_pd, jqXHR);
+          _pd.baseDelay = adaptiveDelay(jqXHR);
           if (resp.data) {
             var children = resp.data.children;
             _pd.task.info.donePages++;
