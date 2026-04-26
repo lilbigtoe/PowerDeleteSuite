@@ -550,6 +550,10 @@
   });
 
   // src/actions.js
+  var MAX_RETRIES = 5;
+  function backoff(retries) {
+    return Math.min(1e3 * Math.pow(2, retries), 3e4);
+  }
   var actions = (_pd) => ({
     page: {
       next() {
@@ -583,7 +587,7 @@
         }
         return true;
       },
-      handle() {
+      handle(retries = 0) {
         _pd.task.pageCalls++;
         $.ajax({
           url: _pd.endpoints[_pd.task.paths.sections[0]],
@@ -608,13 +612,14 @@
                 _pd.actions.page.shift();
                 _pd.actions.page.next();
               }
+            } else if (retries < MAX_RETRIES) {
+              _pd.task.info.errors++;
+              setTimeout(() => _pd.actions.page.handle(retries + 1), backoff(retries));
             } else {
               _pd.task.info.errors++;
-              if (confirm(
-                "Reddit seems to be under heavy load. Would you like to continue processing?"
-              )) {
+              if (confirm("Reddit seems to be under heavy load. Would you like to continue processing?")) {
                 _pd.actions.page.shift();
-                _pd.actions.page.handle();
+                _pd.actions.page.handle(0);
               } else {
                 _pd.ui.done();
               }
@@ -622,13 +627,15 @@
           },
           function() {
             _pd.task.info.errors++;
-            if (confirm(
-              "Error getting " + _pd.task.paths.sections[0] + " page. Would you like to retry?"
-            )) {
-              _pd.actions.page.handle();
+            if (retries < MAX_RETRIES) {
+              setTimeout(() => _pd.actions.page.handle(retries + 1), backoff(retries));
             } else {
-              _pd.actions.page.shift();
-              _pd.actions.page.next();
+              if (confirm("Error getting " + _pd.task.paths.sections[0] + " page. Would you like to retry?")) {
+                _pd.actions.page.handle(0);
+              } else {
+                _pd.actions.page.shift();
+                _pd.actions.page.next();
+              }
             }
           }
         );
@@ -713,7 +720,7 @@
         }
       }
     },
-    delete(item) {
+    delete(item, retries = 0) {
       setTimeout(() => {
         if (_pd.performActions) {
           $.ajax({
@@ -732,13 +739,15 @@
             },
             function() {
               _pd.task.info.errors++;
-              if (confirm(
-                "Error deleting " + (item.kind == "t3" ? "post" : "comment") + ", would you like to retry?"
-              )) {
-                _pd.actions.children.handleSingle();
+              if (retries < MAX_RETRIES) {
+                _pd.actions.delete(item, retries + 1);
               } else {
-                _pd.actions.children.finishItem();
-                _pd.actions.children.handleGroup();
+                if (confirm("Error deleting " + (item.kind == "t3" ? "post" : "comment") + ", would you like to retry?")) {
+                  _pd.actions.delete(item, 0);
+                } else {
+                  _pd.actions.children.finishItem();
+                  _pd.actions.children.handleGroup();
+                }
               }
             }
           );
@@ -747,9 +756,9 @@
           _pd.task.after = _pd.task.items[0].data.name;
           _pd.actions.children.handleSingle();
         }
-      }, 5e3);
+      }, backoff(retries));
     },
-    edit(item) {
+    edit(item, retries = 0) {
       setTimeout(() => {
         if (_pd.performActions) {
           var editString = _pd.task.config.editText || _pd.editStrings[Math.floor(Math.random() * _pd.editStrings.length)];
@@ -771,19 +780,21 @@
             },
             function() {
               _pd.task.info.errors++;
-              if (!confirm(
-                "Error editing " + (item.kind == "t3" ? "post" : "comment") + ", would you like to retry?"
-              )) {
-                item.pdEdited = true;
+              if (retries < MAX_RETRIES) {
+                _pd.actions.edit(item, retries + 1);
+              } else {
+                if (!confirm("Error editing " + (item.kind == "t3" ? "post" : "comment") + ", would you like to retry?")) {
+                  item.pdEdited = true;
+                }
+                _pd.actions.children.handleSingle();
               }
-              _pd.actions.children.handleSingle();
             }
           );
         } else {
           _pd.task.items[0].pdEdited = true;
           _pd.actions.children.handleSingle();
         }
-      }, 5e3);
+      }, backoff(retries));
     }
   });
 
