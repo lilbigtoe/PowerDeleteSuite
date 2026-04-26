@@ -1,4 +1,6 @@
 var MAX_RETRIES = 5;
+var MIN_DELAY = 500;
+var MAX_DELAY = 30000;
 
 function backoff(retries) {
   return Math.min(3000 * Math.pow(2, retries), 30000);
@@ -8,6 +10,34 @@ function retryDelay(retries, jqXHR) {
   var rateLimitReset = jqXHR && parseInt(jqXHR.getResponseHeader("x-ratelimit-reset") || "0") * 1000;
   var retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1000;
   return rateLimitReset || retryAfter || backoff(retries);
+}
+
+
+function applyRateLimitHeaders(jqXHR) {
+  var remaining = parseFloat((jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100");
+  var reset = parseFloat((jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset")) || "60");
+  pd.rateLimitRemaining = remaining;
+  pd.rateLimitReset = reset;
+  if (remaining <= 1) {
+    var cooldownMs = reset * 1000;
+    setCooldown(cooldownMs);
+    pd.ui.startCooldownTimer(cooldownMs);
+    pd.baseDelay = MIN_DELAY;
+  } else {
+    pd.baseDelay = Math.min(Math.max(Math.round((reset * 1000) / Math.max(remaining - 1, 1)), MIN_DELAY), MAX_DELAY);
+  }
+}
+
+function guardRateLimit() {
+  if (pd.rateLimitRemaining !== undefined && pd.rateLimitRemaining <= 1 && cooldownDelay() === 0) {
+    var cooldownMs = (pd.rateLimitReset || 60) * 1000;
+    setCooldown(cooldownMs);
+    pd.ui.startCooldownTimer(cooldownMs);
+  }
+}
+
+function nextDelay(retries) {
+  return retries > 0 ? backoff(retries) : (pd.baseDelay || 3000);
 }
 
 function setCooldown(ms) {
@@ -718,6 +748,12 @@ var pd = {
       },
       handle: function (retries) {
         retries = retries || 0;
+        guardRateLimit();
+        var wait = cooldownDelay();
+        if (wait > 0) {
+          setTimeout(function () { pd.actions.page.handle(retries); }, wait);
+          return;
+        }
         pd.task.pageCalls++;
         $.ajax({
           url: pd.endpoints[pd.task.paths.sections[0]],
@@ -735,7 +771,8 @@ var pd = {
             sort: pd.task.paths.sorts[0],
             t: pd.task.paths.timeframes[0],
           },
-        }).done(function (resp) {
+        }).done(function (resp, status, jqXHR) {
+          applyRateLimitHeaders(jqXHR);
           if (resp.data) {
             var children = resp.data.children;
             pd.task.info.donePages++;
@@ -894,6 +931,12 @@ var pd = {
     delete: function (item, retries) {
       retries = retries || 0;
       setTimeout(function () {
+        guardRateLimit();
+        var wait = cooldownDelay();
+        if (wait > 0) {
+          setTimeout(function () { pd.actions.delete(item, retries); }, wait);
+          return;
+        }
         if (pd.performActions) {
           $.ajax({
             url: "/api/del",
@@ -904,7 +947,8 @@ var pd = {
               uh: pd.config.uh,
               renderstyle: "html",
             },
-          }).done(function () {
+          }).done(function (data, status, jqXHR) {
+            applyRateLimitHeaders(jqXHR);
             pd.task.items[0].pdDeleted = true;
             pd.actions.children.handleSingle();
           }).fail(function (jqXHR) {
@@ -930,11 +974,17 @@ var pd = {
           pd.task.after = pd.task.items[0].data.name;
           pd.actions.children.handleSingle();
         }
-      }, backoff(retries) + cooldownDelay());
+      }, nextDelay(retries) + cooldownDelay());
     },
     edit: function (item, retries) {
       retries = retries || 0;
       setTimeout(function () {
+        guardRateLimit();
+        var wait = cooldownDelay();
+        if (wait > 0) {
+          setTimeout(function () { pd.actions.edit(item, retries); }, wait);
+          return;
+        }
         if (pd.performActions) {
           var editString = pd.task.config.editText ||
             pd.editStrings[Math.floor(Math.random() * pd.editStrings.length)];
@@ -949,7 +999,8 @@ var pd = {
               uh: pd.config.uh,
               renderstyle: "html",
             },
-          }).done(function () {
+          }).done(function (data, status, jqXHR) {
+            applyRateLimitHeaders(jqXHR);
             pd.task.items[0].pdEdited = true;
             pd.actions.children.handleSingle();
           }).fail(function (jqXHR) {
@@ -972,7 +1023,7 @@ var pd = {
           pd.task.items[0].pdEdited = true;
           pd.actions.children.handleSingle();
         }
-      }, backoff(retries) + cooldownDelay());
+      }, nextDelay(retries) + cooldownDelay());
     },
   },
   ui: {
