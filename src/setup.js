@@ -133,7 +133,7 @@ export const setup = (_pd) => ({
         isRemovingComments: $("#pd__comments").is(":checked"),
         isEditing: $("#pd__comments-edit").is(":checked"),
         editText: $("#pd__comments-edit-text").val(),
-        strategy: $("#pd__strategy").val() || "hybrid",
+        strategy: $("input[name='pd__strategy']:checked").val() || "burst",
       },
       paths: {
         sections:
