@@ -23,6 +23,7 @@ function applyRateLimitHeaders(jqXHR) {
     setCooldown(cooldownMs);
     pd.ui.startCooldownTimer(cooldownMs);
     pd.baseDelay = MIN_DELAY;
+    pd.rateLimitRemaining = undefined;
   } else {
     pd.baseDelay = Math.min(Math.max(Math.round((reset * 1000) / Math.max(remaining - 1, 1)), MIN_DELAY), MAX_DELAY);
   }
@@ -30,9 +31,11 @@ function applyRateLimitHeaders(jqXHR) {
 
 function guardRateLimit() {
   if (pd.rateLimitRemaining !== undefined && pd.rateLimitRemaining <= 1 && cooldownDelay() === 0) {
-    var cooldownMs = (pd.rateLimitReset || 60) * 1000;
+    var reset = pd.rateLimitReset !== undefined ? pd.rateLimitReset : 60;
+    var cooldownMs = reset * 1000;
     setCooldown(cooldownMs);
     pd.ui.startCooldownTimer(cooldownMs);
+    pd.rateLimitRemaining = undefined;
   }
 }
 
