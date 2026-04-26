@@ -554,6 +554,16 @@
   function backoff(retries) {
     return Math.min(1e3 * Math.pow(2, retries), 3e4);
   }
+  function retryDelay(retries, jqXHR) {
+    const retryAfter = jqXHR && parseInt(jqXHR.getResponseHeader("Retry-After") || "0") * 1e3;
+    return Math.max(backoff(retries), retryAfter || 0);
+  }
+  function setCooldown(_pd, ms) {
+    _pd.cooldownUntil = Date.now() + ms;
+  }
+  function cooldownDelay(_pd) {
+    return Math.max(0, (_pd.cooldownUntil || 0) - Date.now());
+  }
   var actions = (_pd) => ({
     page: {
       next() {
@@ -625,10 +635,14 @@
               }
             }
           },
-          function() {
+          function(jqXHR) {
             _pd.task.info.errors++;
+            if (jqXHR.status === 429) {
+              var delay = retryDelay(retries, jqXHR);
+              setCooldown(_pd, delay);
+            }
             if (retries < MAX_RETRIES) {
-              setTimeout(() => _pd.actions.page.handle(retries + 1), backoff(retries));
+              setTimeout(() => _pd.actions.page.handle(retries + 1), retryDelay(retries, jqXHR));
             } else {
               if (confirm("Error getting " + _pd.task.paths.sections[0] + " page. Would you like to retry?")) {
                 _pd.actions.page.handle(0);
@@ -737,8 +751,11 @@
               _pd.task.items[0].pdDeleted = true;
               _pd.actions.children.handleSingle();
             },
-            function() {
+            function(jqXHR) {
               _pd.task.info.errors++;
+              if (jqXHR.status === 429) {
+                setCooldown(_pd, retryDelay(retries, jqXHR));
+              }
               if (retries < MAX_RETRIES) {
                 _pd.actions.delete(item, retries + 1);
               } else {
@@ -756,7 +773,7 @@
           _pd.task.after = _pd.task.items[0].data.name;
           _pd.actions.children.handleSingle();
         }
-      }, backoff(retries));
+      }, backoff(retries) + cooldownDelay(_pd));
     },
     edit(item, retries = 0) {
       setTimeout(() => {
@@ -778,8 +795,11 @@
               _pd.task.items[0].pdEdited = true;
               _pd.actions.children.handleSingle();
             },
-            function() {
+            function(jqXHR) {
               _pd.task.info.errors++;
+              if (jqXHR.status === 429) {
+                setCooldown(_pd, retryDelay(retries, jqXHR));
+              }
               if (retries < MAX_RETRIES) {
                 _pd.actions.edit(item, retries + 1);
               } else {
@@ -794,7 +814,7 @@
           _pd.task.items[0].pdEdited = true;
           _pd.actions.children.handleSingle();
         }
-      }, backoff(retries));
+      }, backoff(retries) + cooldownDelay(_pd));
     }
   });
 
