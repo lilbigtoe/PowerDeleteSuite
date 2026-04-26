@@ -17,8 +17,7 @@ A fork of [j0be/PowerDeleteSuite](https://github.com/j0be/PowerDeleteSuite) with
 5. **Edit before delete.** Overwrites comment and self post body text before deleting, so content isn't recoverable via third-party archives.
 6. **Export.** Download a CSV of everything processed before it's deleted.
 7. **Rate limit strategies.** Choose how aggressively to pace requests:
-   - **Burst** — no delay, processes as fast as possible, pauses only when rate limited
-   - **Hybrid** — fast until credits run low, then throttles automatically
+   - **Burst** — no delay, processes as fast as possible, pauses briefly before the rate limit is hit
    - **Adaptive** — paces evenly throughout using Reddit's rate limit headers
 
 ## Installation
@@ -108,8 +107,7 @@ A "PDS" button will appear in the Reddit header automatically whenever you visit
 - **Do not act on mod distinguished** — skips comments you made as a moderator
 
 **Rate limit**
-- **Burst** — no intentional delay, processes as fast as possible. Will pause for the full rate limit reset window if Reddit's limit is hit.
-- **Hybrid** — runs at full speed until credits run low, then throttles. Best balance of speed and continuity.
-- **Adaptive** — paces requests evenly across the rate limit window using Reddit's headers. Smoothest processing but slower overall.
+- **Burst** — no intentional delay, processes as fast as possible. Proactively pauses before the rate limit is hit and resumes when credits replenish.
+- **Adaptive** — paces requests evenly across the rate limit window using Reddit's headers. Slower but uninterrupted.
 
 **Remember Settings** — stores your current configuration in `localStorage` so it is pre-filled next time.

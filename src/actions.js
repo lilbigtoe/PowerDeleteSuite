@@ -14,17 +14,14 @@ const MIN_DELAY = 500;
 const MAX_DELAY = 30000;
 
 function adaptiveDelay(jqXHR, strategy) {
+  if (strategy === "burst") return 0;
+
   const remaining = parseFloat(
     (jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100"
   );
   const reset = parseFloat(
     (jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset")) || "60"
   );
-
-  if (strategy === "burst") return 0;
-
-  if (strategy === "hybrid" && remaining > 25) return MIN_DELAY;
-
   const safeRemaining = Math.max(remaining - 5, 1);
   const delay = Math.round((reset * 1000) / safeRemaining);
   return Math.min(Math.max(delay, MIN_DELAY), MAX_DELAY);
@@ -100,6 +97,18 @@ export const actions = (_pd) => ({
         function (resp, _status, jqXHR) {
           _pd.baseDelay = adaptiveDelay(jqXHR, _pd.task.config.strategy);
           _pd.rateStatus = rateStatus(_pd.baseDelay, _pd.task.config.strategy);
+          if (_pd.task.config.strategy === "burst") {
+            const remaining = parseFloat(
+              (jqXHR && jqXHR.getResponseHeader("x-ratelimit-remaining")) || "100"
+            );
+            if (remaining <= 2) {
+              const delay = parseFloat(
+                (jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset")) || "60"
+              ) * 1000;
+              setCooldown(_pd, delay);
+              _pd.ui.startCooldownTimer(delay);
+            }
+          }
           if (resp.data) {
             var children = resp.data.children;
             _pd.task.info.donePages++;
