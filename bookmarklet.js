@@ -4,7 +4,7 @@ javascript: (function () {
     document.location.hostname.split(".").slice(-2).join(".") === "reddit.com";
   var isOverview = document.location.href.match(/\/overview\b/);
   if (isReddit && isOverview) {
-    var cachBustUrl = 'https://raw.githubusercontent.com/lilbigtoe/PowerDeleteSuite/refactor/module-split/powerdeletesuite.js?' + (new Date().getDate());
+    var cachBustUrl = 'https://raw.githubusercontent.com/lilbigtoe/PowerDeleteSuite/master/powerdeletesuite.js?' + (new Date().getDate());
     fetch(cachBustUrl)
       .then(function (response) {
         return response.text();
