@@ -74,8 +74,42 @@ javascript:(function() { window.bookmarkver = '1.4'; var isReddit = document.loc
 
 </details>
 
+## Tampermonkey (alternative to bookmarklet)
+
+If you prefer not to use a bookmarklet, you can install the userscript via [Tampermonkey](https://www.tampermonkey.net/) or [Violentmonkey](https://violentmonkey.github.io/):
+
+1. Install Tampermonkey or Violentmonkey for your browser
+1. Click the extension icon and choose "Create new script"
+1. Paste the contents of [`powerdeletesuite.user.js`](powerdeletesuite.user.js)
+1. Save
+
+A "PDS" button will appear in the Reddit header automatically whenever you visit your overview page. Must be used on `https://old.reddit.com/user/*/overview`.
+
 ## Usage
 
 1. Go to your [account overview](https://old.reddit.com/u/me/overview).
-1. Click on the bookmark you made while focused on the account overview tab.
-1. Adjust settings to your preferences.
+1. Click the bookmark, or the PDS button if using the userscript.
+1. Adjust settings to your preferences and click **Process**.
+
+### Options
+
+**Actions**
+- **Prepare local backup** — exports items to a downloadable CSV before deleting
+- **Remove submissions** — deletes your posts
+- **Remove comments** — deletes your comments
+- **Edit comments / self posts** — overwrites the body text with random or custom text before deleting, making content unrecoverable from third-party archives. Only affects body text — post titles cannot be edited on Reddit.
+
+**Filters**
+- **Filter by subreddits** — only act on items from checked subreddits
+- **Filter by score** — only act on items above or below a score threshold
+- **Filter by date** — only act on items newer or older than a time window
+- **Do not act on gilded** — skips items that received awards
+- **Do not act on saved** — skips items you have saved
+- **Do not act on mod distinguished** — skips comments you made as a moderator
+
+**Rate limit**
+- **Burst** — no intentional delay, processes as fast as possible. Will pause for the full rate limit reset window if Reddit's limit is hit.
+- **Hybrid** — runs at full speed until credits run low, then throttles. Best balance of speed and continuity.
+- **Adaptive** — paces requests evenly across the rate limit window using Reddit's headers. Smoothest processing but slower overall.
+
+**Remember Settings** — stores your current configuration in `localStorage` so it is pre-filled next time.
