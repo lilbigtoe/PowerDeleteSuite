@@ -108,6 +108,6 @@ A "PDS" button will appear in the Reddit header automatically whenever you visit
 
 **Rate limit**
 - **Burst** — no intentional delay, processes as fast as possible. Proactively pauses before the rate limit is hit and resumes when credits replenish.
-- **Adaptive** — paces requests evenly across the rate limit window using Reddit's headers. Slower but uninterrupted.
+- **Adaptive** — paces requests using Reddit's rate limit headers, automatically speeding up or slowing down to avoid interruptions.
 
 **Remember Settings** — stores your current configuration in `localStorage` so it is pre-filled next time.
