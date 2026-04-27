@@ -18,14 +18,12 @@ function applyRateLimitHeaders(jqXHR) {
   var reset = parseFloat((jqXHR && jqXHR.getResponseHeader("x-ratelimit-reset")) || "60");
   pd.rateLimitRemaining = remaining;
   pd.rateLimitReset = reset;
+  pd.rateLimitHeaderTime = Date.now();
   if (remaining <= 1) {
     var cooldownMs = reset * 1000;
     setCooldown(cooldownMs);
     pd.ui.startCooldownTimer(cooldownMs);
-    pd.baseDelay = MIN_DELAY;
     pd.rateLimitRemaining = undefined;
-  } else {
-    pd.baseDelay = Math.min(Math.max(Math.round((reset * 1000) / Math.max(remaining - 1, 1)), MIN_DELAY), MAX_DELAY);
   }
 }
 
@@ -39,8 +37,16 @@ function guardRateLimit() {
   }
 }
 
+function currentDelay() {
+  if (pd.rateLimitRemaining === undefined || !pd.rateLimitReset) return pd.baseDelay || 3000;
+  var elapsed = (Date.now() - (pd.rateLimitHeaderTime || Date.now())) / 1000;
+  var adjustedReset = Math.max(pd.rateLimitReset - elapsed, 1);
+  var safeRemaining = Math.max(pd.rateLimitRemaining - 1, 1);
+  return Math.min(Math.max(Math.round((adjustedReset * 1000) / safeRemaining), MIN_DELAY), MAX_DELAY);
+}
+
 function nextDelay(retries) {
-  return retries > 0 ? backoff(retries) : (pd.baseDelay || 3000);
+  return retries > 0 ? backoff(retries) : currentDelay();
 }
 
 function setCooldown(ms) {
@@ -1129,6 +1135,7 @@ var pd = {
         if (remaining <= 0) {
           clearInterval(pd.cooldownTimer);
           pd.cooldownTimer = null;
+          pd.cooldownUntil = 0;
           document.title = pd.config.user + " | " + pd.task.info.ajaxCalls;
           $("#pd__central h2").first().find("small").text(
             pd.task.paths.sections[0] + "/" + pd.task.paths.sorts[0] + "/" + pd.task.paths.timeframes[0]
